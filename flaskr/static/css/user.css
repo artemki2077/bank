@@ -1,0 +1,109 @@
+
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    background-image: url(https://goto.msk.ru/camps/img/summer1.jpg);
+    background-size: 100%;
+}
+.aboba{
+  color: #ffffff;
+  font-size: 2vw;
+  margin-left: 38vw;
+
+}
+
+.goto{
+  color: #ffffff;
+  display: inline-block;
+}
+
+.name{
+  color: #808080;
+  font-size: 8vw;
+  transition:  0.3s;
+}
+
+.bank{
+  color: #1b1b1b;
+  display: inline-block;
+  border-radius: 8px;
+  padding: 4px;
+  background-color: #ffa31a;
+  border-color: #ffa31a;
+}
+
+.box{
+  position: absolute;
+  background-color: #1b1b1b;
+  width: 80vw;
+ text-align: center; 
+  height: 70vh;
+  padding: 20px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 30px;
+}
+.money{
+  color: #FFA31A;
+  font-size: 4vw;
+}
+.box-text{
+   text-align: center; 
+  height: 100%;
+  width: 50%;
+  display: inline-block;
+}
+.transactions{
+  margin-left: 4%;
+  margin-right: 4%;
+  margin-bottom: 4%;
+  text-align: center; 
+  height: 85%;
+  width: 40%;
+  display: inline-block;
+  float: right;
+  background-color: #808080;
+  border-radius: 25px;
+}
+
+.transaction{
+  padding: 10px;
+  background-color: #ffa31a;
+  margin:  10px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.account_from, .account_to, .amount{
+  color: #292929;
+  transition: 0.3s;
+  font-size: 1.2vw;
+}
+
+.account_from:hover,
+.account_to:hover, .amount:hover{
+  color: #808080;
+  font-size: 1.5vw;
+  
+}
+
+.from, .to, .Gb, ._, .comment{
+  color: white;
+}
+
+.from, .account_from, .to,
+.account_to, .amount, .Gb, ._, .comment{
+  display: inline-block;
+  font-size: 1vw;
+}
+
+.comment{
+  margin-left: 20px;
+}
+
+
+
+
