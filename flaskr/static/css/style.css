@@ -20,6 +20,10 @@ body {
     display: inline-block;
 
 }
+.send{
+    color: white;
+}
+
 
 .pp{
     position: absolute;
