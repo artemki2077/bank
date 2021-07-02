@@ -230,7 +230,6 @@ def project(id):
             error = "You don't log in"
     print(error)
 
-
     if not session.get("project_name") or session.get("project_name") != id:
         return redirect("/")
     # select = f"select balance from accounts where account_id = {session.get('account_id')}"
@@ -250,7 +249,9 @@ def project(id):
     projects = Projects.query.all()
     accounts = {}
     for i in users + projects:
-        accounts[i.id] = i.login
+        accounts[i.account_id] = i.login
+    print(*transactions)
+    print(*accounts)
     return render_template('user.html', name=id, money=account.balance, transactions=transactions,
                            ids=accounts)
 
