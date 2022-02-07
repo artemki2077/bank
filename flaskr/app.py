@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from flask_migrate import Migrate
 import json
 
 # dbconfig = {
@@ -17,8 +18,9 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost:5432/bank2'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost:5433/bank'
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 class Users(db.Model):
@@ -44,14 +46,16 @@ class Projects(db.Model):
     login = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
     account_id = db.Column(db.Integer, db.ForeignKey('accounts.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
-    def __init__(self, login=None, password=None, account_id=None):
+    def __init__(self, login=None, password=None, account_id=None, user_id=user_id):
         self.login = login
         self.password = password
         self.account_id = account_id
+        self.user_id = user_id
 
     def __repr__(self):
-        return f'Project(login={self.login}, accid={self.account_id})'
+        return f'Project(login={self.login}, accid={self.account_id}, user_id={self.user_id})'
 
 
 class Accounts(db.Model):
@@ -59,7 +63,7 @@ class Accounts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Integer, nullable=False)
 
-    def __init__(self,  balance=None):
+    def __init__(self, balance=None):
         self.balance = balance
 
     def __repr__(self):
@@ -107,7 +111,7 @@ def login():
             if project:
                 session["project_name"] = request.form.get("username")
                 session["account_id"] = project.account_id
-                return redirect(url_for("project", id=session["project_name"]))
+                return redirect(url_for("project", _id=session["project_name"]))
             else:
                 error = 'Invalid username/password'
     return render_template('index.html', error=error)
@@ -166,6 +170,8 @@ def valid_user_api(login):
 
 @app.route("/users/<id>", methods=['POST', 'GET'])
 def user(id):
+    if session.get("username") is None or session.get("username") != id:
+        redirect("/")
     error = ''
     if request.method == 'POST':
         if session.get("username") is not None or session.get("project_name") is not None:
@@ -183,8 +189,6 @@ def user(id):
         else:
             error = "You don't log in"
     print(error)
-    if not session.get("username") or session.get("username") != id:
-        return redirect("/")
     # select = f"select balance from accounts where account_id = {session.get('account_id')}"
     # cur.execute(select)
     # money = cur.fetchall()[0][0]
@@ -203,15 +207,17 @@ def user(id):
     accounts = {}
     for i in users + projects:
         accounts[i.account_id] = i.login
-    print(accounts)
     if not session.get("username"):
         return redirect("/login")
     return render_template('user.html', name=session.get("username"), money=account.balance,
                            transactions=transactions, ids=accounts, error=error)
 
 
-@app.route("/project/<id>", methods=['POST', 'GET'])
-def project(id):
+@app.route("/project/<_id>", methods=['POST', 'GET'])
+def project(_id):
+    if not session.get("project_name") or session.get("project_name") != _id:
+        return redirect("/")
+
     error = ''
     if request.method == 'POST':
         if session.get("username") is not None or session.get("project_name") is not None:
@@ -229,9 +235,6 @@ def project(id):
         else:
             error = "You don't log in"
     print(error)
-
-    if not session.get("project_name") or session.get("project_name") != id:
-        return redirect("/")
     # select = f"select balance from accounts where account_id = {session.get('account_id')}"
     # cur.execute(select)
     # money = cur.fetchall()[0][0]
@@ -250,10 +253,31 @@ def project(id):
     accounts = {}
     for i in users + projects:
         accounts[i.account_id] = i.login
-    print(*transactions)
-    print(*accounts)
-    return render_template('user.html', name=id, money=account.balance, transactions=transactions,
+    return render_template('user.html', name=_id, money=account.balance, transactions=transactions,
                            ids=accounts)
+
+
+@app.route("/ProjectToUser", methods=['POST', 'GET'])
+def add_project_to_user():
+    error = ""
+    if request.method == 'POST':
+        users = Users.query.filter_by(login=str(request.form.get('username')), password=str(request.form.get('password'))).all()
+        if users:
+            u_id = users[0].id
+            me = Accounts(0)
+            db.session.add(me)
+            db.session.commit()
+            a_id = me.id
+            if not user:
+                error = "problem with login or password"
+            else:
+                me = Projects(login=session["pr_login"], password=session['pr_password'], account_id=a_id, user_id=u_id)
+                db.session.add(me)
+                db.session.commit()
+                return redirect("/login")
+        else:
+            error = "not such user"
+    return render_template('project_to_user.html', error=error)
 
 
 @app.route("/logout")
@@ -287,17 +311,18 @@ def save(login, password, check="off"):
     # accid = "SELECT max(account_id) FROM accounts "
     # cur.execute(accid)
     # id = ''
-    me = Accounts(0 if check == "on" else 1000)
-    db.session.add(me)
-    db.session.commit()
-    session["account_id"] = _id
-
     if check == 'on':
-        me = Projects(login=login, password=password, account_id=_id)
+        session["pr_login"] = login
+        session['pr_password'] = password
+        return "proj"
         # insert = "INSERT INTO projects (project_login, project_password,account_id) VALUES
         # '('" + login + "', '" + password + "', " + str(
         #     id) + ");"
     else:
+        me = Accounts(0 if check == "on" else 1000)
+        db.session.add(me)
+        db.session.commit()
+        session["account_id"] = _id
         me = Users(login=login, password=password, account_id=_id)
         # insert = "INSERT INTO users (user_login, user_password,account_id) VALUES
         # ('" + login + "', '" + password + "', " + str(
@@ -315,11 +340,11 @@ def singUp():
                   str(request.form.get('onoffswitch')))
         if not ee:
             return redirect("/login")
-        else:
+        elif ee != "proj":
             error = ee
+        else:
+            return redirect("/ProjectToUser")
     return render_template('singup.html', error=error)
-
-
 
 
 # @app.route('transaction', methods=['POST', 'GET'])
@@ -352,7 +377,6 @@ def check_balance(amount):
     print(a, amount)
     if str(amount).isnumeric():
         return a.balance >= int(amount)
-
 
     # select = "SELECT balance FROM accounts WHERE account_id="+session.get('id')+""
     # cur.execute(select)
@@ -445,5 +469,5 @@ def f():
 
 
 if __name__ == "__main__":
-    app.run(debug=False, port=5000, host="0.0.0.0")
+    app.run(debug=False, port=8000, host="0.0.0.0")
 db.create_all()

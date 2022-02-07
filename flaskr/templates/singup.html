@@ -12,14 +12,15 @@
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}">
-    <title>Goto bank</title>
+
+    <title>Artem bank</title>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark" style="height: 10%; background-color: #1b1b1b;">
     <div class="container">
         <div>
             <div class="goto">
-                Goto
+                Artem
             </div>
             <div class="bank">
                 bank
@@ -58,19 +59,21 @@
 
                     <input type="text" name="username" placeholder="Username">
                     <input type="password" name="password" placeholder="Password">
+
                     <div class="proj">
-                        <div class="ptext">
+                        <span class="ptext">
                             Are you project?
-                        </div>
-                        <div class="pp">
+                        </span>
+                        <span class="pp">
                             <div class="onoffswitch">
                                 <input type="checkbox" name="onoffswitch"
                                        class="onoffswitch-checkbox"
                                        id="myonoffswitch" tabindex="0" checked>
                                 <label class="onoffswitch-label" for="myonoffswitch"></label>
                             </div>
-                        </div>
+                        </span>
                     </div>
+
                     <div class="error">
                         {{error}}
                     </div>
@@ -91,6 +94,6 @@
         </div>
     </div>
 </div>
-
+<script src="{{ url_for('static',filename='script.js') }}"></script>
 </body>
 </html>
