@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Blueprint
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -35,9 +35,17 @@ class Users(db.Model):
         self.password = password
         self.account_id = account_id
 
+    def to_json(self):
+        return {
+            "id": str(self.id),
+            "login": str(self.login),
+            "password": str(self.password),
+            "account_id": str(self.account_id)
+        }
+
     def __repr__(self):
         # return '%r' % self.account_id
-        return f'User(login={self.login}, id={self.account_id})'
+        return f'User(login={self.login}, id={self.account_id}, account_id={self.account_id})'
 
 
 class Projects(db.Model):
@@ -54,6 +62,15 @@ class Projects(db.Model):
         self.account_id = account_id
         self.user_id = user_id
 
+    def to_json(self):
+        return {
+            "id": str(self.id),
+            "login": str(self.login),
+            "password": str(self.password),
+            "account_id": str(self.account_id),
+            "user_id": str(self.account_id)
+        }
+
     def __repr__(self):
         return f'Project(login={self.login}, accid={self.account_id}, user_id={self.user_id})'
 
@@ -65,6 +82,12 @@ class Accounts(db.Model):
 
     def __init__(self, balance=None):
         self.balance = balance
+
+    def to_json(self):
+        return {
+            "id": str(self.id),
+            "balance": str(self.balance)
+        }
 
     def __repr__(self):
         return f'Account(id={self.id},balance={self.balance})'
@@ -85,6 +108,16 @@ class Transactions(db.Model):
         self.amount = amount
         self.comment = comment
 
+    def to_json(self):
+        return {
+            "id": str(self.id),
+            "account_id_from": str(self.account_id_from),
+            "account_id_to": str(self.account_id_to),
+            "amount": str(self.amount),
+            "comment": str(self.comment),
+            "time": str(self.time)
+        }
+
     def __repr__(self):
         return f'Transaction(id={self.id},account_id_from={self.account_id_from},' \
                f'account_id_to={self.account_id_to},amount={self.amount},comment' \
@@ -93,6 +126,21 @@ class Transactions(db.Model):
 
 # conn = psycopg2.co = nnect(**dbconfig)
 # cur = conn.cursor()
+
+blueprint = Blueprint(
+    'news_api',
+    __name__,
+    template_folder='templates'
+)
+
+
+@blueprint.route('/api/get_info/<user>')
+def get_news(user):
+    a = Users.query.filter_by(login=user).first()
+    return jsonify({
+        "answer": "SUCCESS",
+
+    })
 
 
 @app.route('/login', methods=['POST', 'GET'])
@@ -122,25 +170,25 @@ def valid_project_login(login, password):
     return project
 
 
-@app.route("/api", methods=['POST', 'GET'])
-def api():
-    error = ''
-    if request.method == 'GET':
-        ac_id = okpolzvl(request.args.get('from'), request.args.get('password'))
-        if ac_id:
-            if valid_user_api(request.args.get('to')):
-                if check_balance_api(request.args.get('amount'), ac_id):
-                    spisanie(ac_id, request.args.get('amount'))
-                    nachislenie(request.args.get('to'), request.args.get('amount'))
-                    savetran(ac_id, request.args.get('to'), request.args.get('amount'), request.args.get('comment'))
-                    error = 'success'
-                else:
-                    error = "You don't have enough money"
-            else:
-                error = "User doesn't exist"
-        else:
-            error = "password/login error"
-    return jsonify({"answer": error})
+# @app.route("/api", methods=['POST', 'GET'])
+# def api():
+#     error = ''
+#     if request.method == 'GET':
+#         ac_id = okpolzvl(request.args.get('from'), request.args.get('password'))
+#         if ac_id:
+#             if valid_user_api(request.args.get('to')):
+#                 if check_balance_api(request.args.get('amount'), ac_id):
+#                     spisanie(ac_id, request.args.get('amount'))
+#                     nachislenie(request.args.get('to'), request.args.get('amount'))
+#                     savetran(ac_id, request.args.get('to'), request.args.get('amount'), request.args.get('comment'))
+#                     error = 'success'
+#                 else:
+#                     error = "You don't have enough money"
+#             else:
+#                 error = "User doesn't exist"
+#         else:
+#             error = "password/login error"
+#     return jsonify({"answer": error})
 
 
 def check_balance_api(amount, nn):
@@ -469,5 +517,6 @@ def f():
 
 
 if __name__ == "__main__":
+    app.register_blueprint(blueprint)
     app.run(debug=False, port=8000, host="0.0.0.0")
 db.create_all()
